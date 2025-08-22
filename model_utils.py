@@ -800,27 +800,13 @@ def tokenize(
         assert use_chat_template
 
     def format_input(sample):
-        if use_chat_template:
-            chat = format_chat(
-                data["user_template"].format(**sample),
-                system_message=system_message,
-            )
-            if continue_final_message:
-                chat.append({"role": "assistant", "content": data['system_template'].format(**sample)})
-            try:
-                # sometimes the tokenizer doesn't support system message
-                prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=not continue_final_message, continue_final_message=continue_final_message)
-            except Exception as e:
-                # so we exclude the system message
-                chat = format_chat(data["user_template"].format(**sample), system_message=None)
-                if continue_final_message:
-                    chat.append({"role": "assistant", "content": data['system_template'].format(**sample)})
-                prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=not continue_final_message, continue_final_message=continue_final_message)
-
-            tokenized_input = tokenizer([prompt], return_tensors="pt", add_special_tokens=False)
-        else:
-            prompt = data["prompt_template"].format(**sample)
-            tokenized_input = tokenizer([prompt], return_tensors="pt")
+        prompt = data["prompt_template"].format(**sample)
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
+        prompt = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+        tokenized_input = tokenizer([prompt], return_tensors="pt")
         return tokenized_input
 
     if "Phi3SmallTokenizer" in str(type(tokenizer)):
