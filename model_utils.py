@@ -1308,6 +1308,7 @@ class MyHFModel(LLM):
             do_sample=False,
             temperature=None,
             top_p=None,
+            top_k=None,
             pad_token_id=self.tokenizer.pad_token_id,
             return_dict_in_generate=True,
         )
