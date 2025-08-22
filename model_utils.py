@@ -1271,7 +1271,11 @@ class MyHFModel(LLM):
         set_seed(seed)
 
         from transformers import AutoTokenizer, AutoModelForCausalLM
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype="auto",
@@ -1304,7 +1308,7 @@ class MyHFModel(LLM):
             do_sample=False,
             temperature=None,
             top_p=None,
-            pad_token_id=self.tokenizer.eos_token_id,
+            pad_token_id=self.tokenizer.pad_token_id,
             return_dict_in_generate=True,
         )
         text = self.tokenizer.decode(outputs['sequences'][0, input_len:], skip_special_tokens=True)
