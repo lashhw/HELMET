@@ -1255,6 +1255,77 @@ class SGLangModel(LLM):
         ]
 
 
+class MyHFModel(LLM):
+    def __init__(
+        self,
+        model_name,
+        max_length,
+        generation_max_length,
+        generation_min_length,
+        seed=42,
+        **kwargs,
+    ):
+        self.max_length = max_length
+        self.generation_max_length = generation_max_length
+        self.generation_min_length = generation_min_length
+        set_seed(seed)
+
+        from transformers import AutoTokenizer, AutoModelForCausalLM
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype="auto",
+            device_map="auto"
+        )
+    
+    def prepare_inputs(self, test_item, data):
+        return tokenize(
+            test_item,
+            data,
+            tokenizer=self.tokenizer,
+            max_length=self.max_length,
+            generation_max_length=self.generation_max_length,
+            use_chat_template=False,
+            system_message=False,
+        )
+    
+    @torch.no_grad()
+    def generate(self, inputs=None, prompt=None, **kwargs):
+        assert inputs is not None
+        assert prompt is None
+
+        inputs = inputs.to(self.model.device)
+        input_len = inputs.input_ids.size(1)
+
+        outputs = self.model.generate(
+            **inputs,
+            max_new_tokens=self.generation_max_length,
+            min_new_tokens=self.generation_min_length,
+            do_sample=False,
+            temperature=None,
+            top_p=None,
+            pad_token_id=self.tokenizer.eos_token_id,
+            return_dict_in_generate=True,
+        )
+        text = self.tokenizer.decode(outputs['sequences'][0, input_len:], skip_special_tokens=True)
+
+        save_prompt = self.tokenizer.decode(inputs["input_ids"][0][:500]) + " <skip> " + self.tokenizer.decode(inputs["input_ids"][0][-500:])
+        output_len = outputs['sequences'].size(1) - input_len
+        # free up some gpu memory
+        del inputs
+        del outputs
+
+        return {
+            "output": text,
+            "input_len": input_len,
+            "output_len": output_len,
+            "input_text": save_prompt,
+        }
+
+    def generate_batch(self, inputs=None, prompt=None, **kwargs):
+        return super().generate_batch(inputs=inputs, prompt=prompt, **kwargs)
+
+
 def load_LLM(args):
     kwargs = {}
     if "gpt" in args.model_name_or_path:
@@ -1278,7 +1349,7 @@ def load_LLM(args):
         model_cls = SGLangModel
         kwargs['seed'] = args.seed
     else:
-        model_cls = HFModel
+        model_cls = MyHFModel
         kwargs['seed'] = args.seed
         if args.no_torch_compile:
             kwargs["torch_compile"] = False
