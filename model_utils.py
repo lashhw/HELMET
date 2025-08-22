@@ -1262,7 +1262,7 @@ class MyHFModel(LLM):
         max_length,
         generation_max_length,
         generation_min_length,
-        seed=42,
+        seed,
         **kwargs,
     ):
         self.max_length = max_length
