@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Callable, Any
 import functools
 
 import torch
-from transformers import PreTrainedTokenizer, set_seed
+from transformers import PreTrainedTokenizer, set_seed, DynamicCache
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
@@ -1306,6 +1306,7 @@ class MyHFModel(LLM):
         inputs = inputs.to(self.model.device)
         input_len = inputs.input_ids.size(1)
 
+        past_key_values = DynamicCache()
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=self.generation_max_length,
@@ -1316,6 +1317,7 @@ class MyHFModel(LLM):
             top_k=None,
             pad_token_id=self.tokenizer.pad_token_id,
             return_dict_in_generate=True,
+            past_key_values=past_key_values,
         )
         text = self.tokenizer.decode(outputs['sequences'][0, input_len:], skip_special_tokens=True)
 
@@ -1324,6 +1326,14 @@ class MyHFModel(LLM):
         # free up some gpu memory
         del inputs
         del outputs
+
+        if hasattr(self.model, 'gating_mode') and self.model.gating_mode == 3:
+            num_tokens_in_kv_cache = []
+            for layer_idx in range(len(past_key_values.gated_key_cache)):
+                for h in range(len(past_key_values.gated_key_cache[layer_idx])):
+                    num_tokens_in_kv_cache.append(past_key_values.gated_key_cache[layer_idx][h][past_key_values.gated_valid_idx[layer_idx][h]:].size(0))
+            average_tokens_in_kv_cache = sum(num_tokens_in_kv_cache) / len(num_tokens_in_kv_cache)
+            input_len = average_tokens_in_kv_cache
 
         return {
             "output": text,
