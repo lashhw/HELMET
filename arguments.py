@@ -62,6 +62,10 @@ def parse_arguments():
     parser.add_argument("--debug", action="store_true", help="for debugging")
     parser.add_argument("--count_tokens", action="store_true", help="instead of running generation, just count the number of tokens (only for HF models not API)")
 
+    # filtering
+    parser.add_argument("--enable_filtering", action="store_true")
+    parser.add_argument("--filtering_weight_path", type=str, default=None)
+
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config)) if args.config is not None else {}
     parser.set_defaults(**config)

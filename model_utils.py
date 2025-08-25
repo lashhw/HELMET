@@ -1281,6 +1281,11 @@ class MyHFModel(LLM):
             torch_dtype="auto",
             device_map="auto"
         )
+
+        if kwargs['enable_filtering']:
+            state_dict = torch.load(kwargs['filtering_weight_path'])
+            self.model.load_state_dict(state_dict, strict=False)
+            self.model.gating_mode = 3
     
     def prepare_inputs(self, test_item, data):
         return tokenize(
@@ -1356,6 +1361,8 @@ def load_LLM(args):
     else:
         model_cls = MyHFModel
         kwargs['seed'] = args.seed
+        kwargs['enable_filtering'] = args.enable_filtering
+        kwargs['filtering_weight_path'] = args.filtering_weight_path
         if args.no_torch_compile:
             kwargs["torch_compile"] = False
         if args.no_bf16:
