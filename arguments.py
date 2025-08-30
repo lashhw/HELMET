@@ -66,6 +66,10 @@ def parse_arguments():
     parser.add_argument("--enable_filtering", action="store_true")
     parser.add_argument("--filtering_weight_path", type=str, default=None)
 
+    # duo_attn
+    parser.add_argument("--enable_duo", action="store_true")
+    parser.add_argument("--duo_sparsity", type=float, default=0.5)
+
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config)) if args.config is not None else {}
     parser.set_defaults(**config)

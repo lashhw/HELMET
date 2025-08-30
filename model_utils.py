@@ -9,6 +9,8 @@ from transformers import PreTrainedTokenizer, set_seed, DynamicCache
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
+from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
+
 import logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S')
@@ -1270,7 +1272,20 @@ class MyHFModel(LLM):
         self.generation_min_length = generation_min_length
         set_seed(seed)
 
-        from transformers import AutoTokenizer, AutoModelForCausalLM
+        from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
+
+        model_config = AutoConfig.from_pretrained(model_name)
+
+        if kwargs['enable_duo']:
+            attn_heads, sink_size, recent_size = load_attn_pattern(
+                "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
+            )
+            attn_heads, sparsity = sparsify_attention_heads(attn_heads, sparsity=kwargs['duo_sparsity'])
+            logger.info(f"duo_attn enabled with {sparsity} sparsity.")
+
+            model_config.enable_duo_attn = True
+            model_config.sink_size = sink_size
+            model_config.local_window_size = recent_size
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         if self.tokenizer.pad_token_id is None:
@@ -1278,6 +1293,7 @@ class MyHFModel(LLM):
 
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
+            config=model_config,
             torch_dtype="auto",
             device_map="auto"
         )
@@ -1285,6 +1301,13 @@ class MyHFModel(LLM):
         if kwargs['enable_filtering']:
             state_dict = torch.load(kwargs['filtering_weight_path'])
             self.model.load_state_dict(state_dict, strict=False)
+            self.model.gating_mode = 3
+        elif kwargs['enable_duo']:
+            assert attn_heads.shape == (model_config.num_hidden_layers, model_config.num_key_value_heads)
+            for layer_idx in range(model_config.num_hidden_layers):
+                assert self.model.model.layers[layer_idx].self_attn.duo_attn_alpha.shape == (model_config.num_key_value_heads,)
+                for head_idx in range(model_config.num_key_value_heads):
+                    self.model.model.layers[layer_idx].self_attn.duo_attn_alpha.data[head_idx] = attn_heads[layer_idx, head_idx]
             self.model.gating_mode = 3
     
     def prepare_inputs(self, test_item, data):
@@ -1373,6 +1396,8 @@ def load_LLM(args):
         kwargs['seed'] = args.seed
         kwargs['enable_filtering'] = args.enable_filtering
         kwargs['filtering_weight_path'] = args.filtering_weight_path
+        kwargs['enable_duo'] = args.enable_duo
+        kwargs['duo_sparsity'] = args.duo_sparsity
         if args.no_torch_compile:
             kwargs["torch_compile"] = False
         if args.no_bf16:
