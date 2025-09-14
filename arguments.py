@@ -65,7 +65,7 @@ def parse_arguments():
     # filtering
     parser.add_argument("--enable_filtering", action="store_true")
     parser.add_argument("--filtering_folder", type=str, default=None)
-    parser.add_argument("--no-lora", action="store_true")
+    parser.add_argument("--load_lora", action="store_true")
 
     # duo_attn
     parser.add_argument("--enable_duo", action="store_true")
