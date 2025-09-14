@@ -3,7 +3,7 @@ ninja
 packaging
 torch
 datasets
-transformers
+transformers==4.53.3
 accelerate
 sentencepiece
 pytrec_eval
