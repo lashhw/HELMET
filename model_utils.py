@@ -10,7 +10,11 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 from peft import PeftModel
-from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
+
+try:
+    from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
+except:
+    pass
 
 import logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
