@@ -9,6 +9,7 @@ from transformers import PreTrainedTokenizer, set_seed, DynamicCache
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
+from peft import PeftModel
 from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
 
 import logging
@@ -1299,8 +1300,16 @@ class MyHFModel(LLM):
         )
 
         if kwargs['enable_filtering']:
-            state_dict = torch.load(kwargs['filtering_weight_path'])
-            self.model.load_state_dict(state_dict, strict=False)
+            if not kwargs['no-lora']:
+                self.model = PeftModel.from_pretrained(self.model, f"{kwargs['filtering_folder']}/lora")
+
+            state_dict = torch.load(f'{kwargs['filtering_folder']}/other.pt')
+            _, unexpected_keys = self.model.load_state_dict(state_dict, strict=False)
+            assert len(unexpected_keys) == 0
+
+            if not kwargs['no-lora']:
+                self.model = self.model.merge_and_unload()
+
             self.model.gating_mode = 3
         elif kwargs['enable_duo']:
             assert attn_heads.shape == (model_config.num_hidden_layers, model_config.num_key_value_heads)
@@ -1395,7 +1404,8 @@ def load_LLM(args):
         model_cls = MyHFModel
         kwargs['seed'] = args.seed
         kwargs['enable_filtering'] = args.enable_filtering
-        kwargs['filtering_weight_path'] = args.filtering_weight_path
+        kwargs['filtering_folder'] = args.filtering_folder
+        kwargs['no-lora'] = args.no_lora
         kwargs['enable_duo'] = args.enable_duo
         kwargs['duo_sparsity'] = args.duo_sparsity
         if args.no_torch_compile:
