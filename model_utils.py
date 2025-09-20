@@ -9,7 +9,10 @@ from transformers import PreTrainedTokenizer, set_seed, DynamicCache
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
-from peft import PeftModel
+try:
+    from peft import PeftModel
+except:
+    pass
 
 try:
     from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
