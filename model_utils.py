@@ -1304,14 +1304,17 @@ class MyHFModel(LLM):
         )
 
         if kwargs['enable_filtering']:
-            if kwargs['load_lora']:
-                self.model = PeftModel.from_pretrained(self.model, f"{kwargs['filtering_folder']}/lora")
+            lora_folder = f"{kwargs['filtering_folder']}/lora"
+            lora_exists = os.path.isdir(lora_folder)
+            if lora_exists:
+                logger.info(f"loading lora from {lora_folder}")
+                self.model = PeftModel.from_pretrained(self.model, lora_folder)
 
             state_dict = torch.load(f'{kwargs['filtering_folder']}/other.pt')
             _, unexpected_keys = self.model.load_state_dict(state_dict, strict=False)
             assert len(unexpected_keys) == 0
 
-            if kwargs['load_lora']:
+            if lora_exists:
                 self.model = self.model.merge_and_unload()
 
             self.model.gating_mode = 3
@@ -1409,7 +1412,6 @@ def load_LLM(args):
         kwargs['seed'] = args.seed
         kwargs['enable_filtering'] = args.enable_filtering
         kwargs['filtering_folder'] = args.filtering_folder
-        kwargs['load_lora'] = args.load_lora
         kwargs['enable_duo'] = args.enable_duo
         kwargs['duo_sparsity'] = args.duo_sparsity
         if args.no_torch_compile:
