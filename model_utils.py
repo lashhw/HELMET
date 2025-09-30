@@ -8,6 +8,12 @@ import torch
 from transformers import PreTrainedTokenizer, set_seed, DynamicCache
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
+import contextlib
+
+try:
+    from kvpress import SnapKVPress
+except:
+    pass
 
 try:
     from peft import PeftModel
@@ -1284,6 +1290,11 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
+        assert kwargs['use_snapkv'] + kwargs['use_filtering'] + kwargs['use_duo'] <= 1
+
+        if kwargs['use_snapkv']:
+            self.press = SnapKVPress(compression_ratio=kwargs["snapkv_compression_ratio"])
+
         if kwargs['use_duo']:
             attn_heads, sink_size, recent_size = load_attn_pattern(
                 "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
@@ -1349,18 +1360,20 @@ class MyHFModel(LLM):
         input_len = inputs.input_ids.size(1)
 
         past_key_values = DynamicCache()
-        outputs = self.model.generate(
-            **inputs,
-            max_new_tokens=self.generation_max_length,
-            min_new_tokens=self.generation_min_length,
-            do_sample=False,
-            temperature=None,
-            top_p=None,
-            top_k=None,
-            pad_token_id=self.tokenizer.pad_token_id,
-            return_dict_in_generate=True,
-            past_key_values=past_key_values,
-        )
+        manager = self.press(self.model) if hasattr(self, 'press') else contextlib.nullcontext()
+        with manager:
+            outputs = self.model.generate(
+                **inputs,
+                max_new_tokens=self.generation_max_length,
+                min_new_tokens=self.generation_min_length,
+                do_sample=False,
+                temperature=None,
+                top_p=None,
+                top_k=None,
+                pad_token_id=self.tokenizer.pad_token_id,
+                return_dict_in_generate=True,
+                past_key_values=past_key_values,
+            )
         text = self.tokenizer.decode(outputs['sequences'][0, input_len:], skip_special_tokens=True)
 
         save_prompt = self.tokenizer.decode(inputs["input_ids"][0][:500]) + " <skip> " + self.tokenizer.decode(inputs["input_ids"][0][-500:])
@@ -1368,6 +1381,13 @@ class MyHFModel(LLM):
         # free up some gpu memory
         del inputs
         del outputs
+
+        if hasattr(self, 'press'):
+            num_tokens_in_kv_cache = []
+            for layer_idx in range(len(past_key_values.layers)):
+                num_tokens_in_kv_cache.append(past_key_values.layers[layer_idx].keys.shape[2])
+            average_tokens_in_kv_cache = sum(num_tokens_in_kv_cache) / len(num_tokens_in_kv_cache)
+            input_len = average_tokens_in_kv_cache
 
         if hasattr(self.model, 'gating_mode') and self.model.gating_mode == 3:
             num_tokens_in_kv_cache = []
@@ -1413,6 +1433,8 @@ def load_LLM(args):
     else:
         model_cls = MyHFModel
         kwargs['seed'] = args.seed
+        kwargs['use_snapkv'] = args.use_snapkv
+        kwargs['snapkv_compression_ratio'] = args.snapkv_compression_ratio
         kwargs['use_filtering'] = args.use_filtering
         kwargs['filtering_folder'] = args.filtering_folder
         kwargs['use_duo'] = args.use_duo

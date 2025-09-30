@@ -62,6 +62,10 @@ def parse_arguments():
     parser.add_argument("--debug", action="store_true", help="for debugging")
     parser.add_argument("--count_tokens", action="store_true", help="instead of running generation, just count the number of tokens (only for HF models not API)")
 
+    # snapkv
+    parser.add_argument("--use_snapkv", action="store_true")
+    parser.add_argument("--snapkv_compression_ratio", type=float, default=0.5)
+
     # filtering
     parser.add_argument("--use_filtering", action="store_true")
     parser.add_argument("--filtering_folder", type=str, default=None)
