@@ -9,5 +9,3 @@ sentencepiece
 pytrec_eval
 rouge_score
 openai
-cachetools
-fire
