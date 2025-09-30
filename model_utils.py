@@ -1284,7 +1284,7 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        if kwargs['enable_duo']:
+        if kwargs['use_duo']:
             attn_heads, sink_size, recent_size = load_attn_pattern(
                 "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
             )
@@ -1306,7 +1306,7 @@ class MyHFModel(LLM):
             device_map="auto"
         )
 
-        if kwargs['enable_filtering']:
+        if kwargs['use_filtering']:
             lora_folder = f"{kwargs['filtering_folder']}/lora"
             lora_exists = os.path.isdir(lora_folder)
             if lora_exists:
@@ -1321,7 +1321,7 @@ class MyHFModel(LLM):
                 self.model = self.model.merge_and_unload()
 
             self.model.gating_mode = 3
-        elif kwargs['enable_duo']:
+        elif kwargs['use_duo']:
             assert attn_heads.shape == (model_config.num_hidden_layers, model_config.num_key_value_heads)
             for layer_idx in range(model_config.num_hidden_layers):
                 assert self.model.model.layers[layer_idx].self_attn.duo_attn_alpha.shape == (model_config.num_key_value_heads,)
@@ -1413,9 +1413,9 @@ def load_LLM(args):
     else:
         model_cls = MyHFModel
         kwargs['seed'] = args.seed
-        kwargs['enable_filtering'] = args.enable_filtering
+        kwargs['use_filtering'] = args.use_filtering
         kwargs['filtering_folder'] = args.filtering_folder
-        kwargs['enable_duo'] = args.enable_duo
+        kwargs['use_duo'] = args.use_duo
         kwargs['duo_sparsity'] = args.duo_sparsity
         if args.no_torch_compile:
             kwargs["torch_compile"] = False

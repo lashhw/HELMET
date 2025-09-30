@@ -63,11 +63,11 @@ def parse_arguments():
     parser.add_argument("--count_tokens", action="store_true", help="instead of running generation, just count the number of tokens (only for HF models not API)")
 
     # filtering
-    parser.add_argument("--enable_filtering", action="store_true")
+    parser.add_argument("--use_filtering", action="store_true")
     parser.add_argument("--filtering_folder", type=str, default=None)
 
     # duo_attn
-    parser.add_argument("--enable_duo", action="store_true")
+    parser.add_argument("--use_duo", action="store_true")
     parser.add_argument("--duo_sparsity", type=float, default=0.5)
 
     args = parser.parse_args()
