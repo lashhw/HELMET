@@ -69,6 +69,7 @@ def parse_arguments():
     # filtering
     parser.add_argument("--use_filtering", action="store_true")
     parser.add_argument("--filtering_folder", type=str, default=None)
+    parser.add_argument("--max_tokens_per_head", type=int, default=None)
 
     # duo_attn
     parser.add_argument("--use_duo", action="store_true")

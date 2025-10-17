@@ -1295,6 +1295,11 @@ class MyHFModel(LLM):
         if kwargs['use_snapkv']:
             self.press = SnapKVPress(compression_ratio=kwargs["snapkv_compression_ratio"])
 
+        if kwargs['use_filtering']:
+            assert kwargs['max_tokens_per_head'] is not None
+            model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
+            model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
+
         if kwargs['use_duo']:
             attn_heads, sink_size, recent_size = load_attn_pattern(
                 "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
@@ -1390,11 +1395,8 @@ class MyHFModel(LLM):
             input_len = average_tokens_in_kv_cache
 
         if hasattr(self.model, 'gating_mode') and self.model.gating_mode == 3:
-            num_tokens_in_kv_cache = []
-            for layer_idx in range(len(past_key_values.gated_key_cache)):
-                for h in range(len(past_key_values.gated_key_cache[layer_idx])):
-                    num_tokens_in_kv_cache.append(past_key_values.gated_key_cache[layer_idx][h][past_key_values.gated_valid_idx[layer_idx][h]:].size(0))
-            average_tokens_in_kv_cache = sum(num_tokens_in_kv_cache) / len(num_tokens_in_kv_cache)
+            total_tokens_in_kv_cache = past_key_values.next_free_block * self.model.config.block_size
+            average_tokens_in_kv_cache = total_tokens_in_kv_cache / (self.model.config.num_hidden_layers * self.model.config.num_key_value_heads)
             input_len = average_tokens_in_kv_cache
 
         return {
@@ -1437,6 +1439,7 @@ def load_LLM(args):
         kwargs['snapkv_compression_ratio'] = args.snapkv_compression_ratio
         kwargs['use_filtering'] = args.use_filtering
         kwargs['filtering_folder'] = args.filtering_folder
+        kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         kwargs['use_duo'] = args.use_duo
         kwargs['duo_sparsity'] = args.duo_sparsity
         if args.no_torch_compile:
