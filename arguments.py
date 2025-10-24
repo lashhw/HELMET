@@ -71,6 +71,8 @@ def parse_arguments():
     parser.add_argument("--filtering_folder", type=str)
     parser.add_argument("--max_tokens_per_head", type=int)
     parser.add_argument("--g_threshold", type=float)
+    parser.add_argument("--use_quest", action="store_true")
+    parser.add_argument("--quest_token_budget", type=int)
 
     # duo_attn
     parser.add_argument("--use_duo", action="store_true")

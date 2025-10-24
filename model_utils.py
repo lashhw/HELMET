@@ -1303,6 +1303,10 @@ class MyHFModel(LLM):
             assert kwargs['g_threshold'] is not None
             model_config.g_threshold = kwargs['g_threshold']
 
+            if kwargs['use_quest']:
+                model_config.use_quest = True
+                model_config.quest_token_budget = kwargs['quest_token_budget']
+
         if kwargs['use_duo']:
             attn_heads, sink_size, recent_size = load_attn_pattern(
                 "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
@@ -1445,6 +1449,8 @@ def load_LLM(args):
         kwargs['filtering_folder'] = args.filtering_folder
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         kwargs['g_threshold'] = args.g_threshold
+        kwargs['use_quest'] = args.use_quest
+        kwargs['quest_token_budget'] = args.quest_token_budget
         kwargs['use_duo'] = args.use_duo
         kwargs['duo_sparsity'] = args.duo_sparsity
         if args.no_torch_compile:
