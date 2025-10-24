@@ -1337,7 +1337,8 @@ class MyHFModel(LLM):
                 self.model = self.model.merge_and_unload()
 
             self.model.gating_mode = 3
-        elif kwargs['use_duo']:
+
+        if kwargs['use_duo']:
             assert attn_heads.shape == (model_config.num_hidden_layers, model_config.num_key_value_heads)
             for layer_idx in range(model_config.num_hidden_layers):
                 assert self.model.model.layers[layer_idx].self_attn.duo_attn_alpha.shape == (model_config.num_key_value_heads,)
