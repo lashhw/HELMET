@@ -1307,8 +1307,7 @@ class MyHFModel(LLM):
                 model_config.use_quest = True
                 model_config.quest_token_budget = kwargs['quest_token_budget']
 
-            if kwargs['save_attn_prob']:
-                model_config.save_attn_prob = True
+            model_config.save_attn_prob = kwargs['save_attn_prob']
 
         if kwargs['use_duo']:
             attn_heads, sink_size, recent_size = load_attn_pattern(

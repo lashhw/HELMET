@@ -73,7 +73,7 @@ def parse_arguments():
     parser.add_argument("--g_threshold", type=float)
     parser.add_argument("--use_quest", action="store_true")
     parser.add_argument("--quest_token_budget", type=int)
-    parser.add_argument("--save_attn_prob", action="store_true")
+    parser.add_argument("--save_attn_prob", type=float, default=0.0)
 
     # duo_attn
     parser.add_argument("--use_duo", action="store_true")
