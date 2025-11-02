@@ -1278,12 +1278,16 @@ class MyHFModel(LLM):
         max_length,
         generation_max_length,
         generation_min_length,
+        use_chat_template,
+        system_message,
         seed,
         **kwargs,
     ):
         self.max_length = max_length
         self.generation_max_length = generation_max_length
         self.generation_min_length = generation_min_length
+        self.use_chat_template = use_chat_template
+        self.system_message = system_message
         set_seed(seed)
 
         from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
@@ -1362,8 +1366,8 @@ class MyHFModel(LLM):
             tokenizer=self.tokenizer,
             max_length=self.max_length,
             generation_max_length=self.generation_max_length,
-            use_chat_template=False,
-            system_message=False,
+            use_chat_template=self.use_chat_template,
+            system_message=self.system_message,
         )
     
     @torch.no_grad()
