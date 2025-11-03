@@ -172,12 +172,12 @@ def truncate_llama2(dataset, data, postfix_text=" ... [the rest of the text is o
             # truncate
             sample["context"] = sample["context"][:tokens["offset_mapping"][max_length-separator_length][1]] + postfix_text
         return sample
-    return data.map(truncate, num_proc=16)
+    return data.map(truncate, num_proc=8)
 
 
 def filter_length(data, min_length, key):
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")
-    data = data.filter(lambda x: len(tokenizer(x[key])['input_ids']) >= min_length, num_proc=32)
+    data = data.filter(lambda x: len(tokenizer(x[key])['input_ids']) >= min_length, num_proc=8)
     return data
 
 
@@ -447,7 +447,7 @@ def load_icl(dataset, max_test_sample=None, seed=42):
         )
         return {"context": context, "question": sample[text_field], "answer": str(label_mapping[int(sample[label_field])])}
 
-    final_data = test_data.map(preprocess, num_proc=40)
+    final_data = test_data.map(preprocess, num_proc=8)
 
     def post_process(output, example):
         prediction = output["output"]
