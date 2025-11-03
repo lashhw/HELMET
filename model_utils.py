@@ -259,12 +259,8 @@ class OpenAIModel(LLM):
                     "body": {
                         "model": self.model_name,
                         "messages": p,
-                        "max_tokens": self.generation_max_length,
-                        "temperature": self.temperature if self.do_sample else 0.0,
-                        "top_p": self.top_p,
-                        "stop": self.stops,
-                        "seed": self.seed,
-                        **kwargs,
+                        "max_completion_tokens": self.generation_max_length,
+                        "temperature": self.temperature,
                     }
                 }) + "\n")
         upload_file = self.model.files.create(file=open(batch_file, "rb"), purpose="batch")

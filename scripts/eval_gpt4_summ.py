@@ -428,7 +428,7 @@ def check_metrics(model, results_file, output_file):
     return results
 
 if __name__ == "__main__":
-    model = OpenAIModel("gpt-4o-2024-05-13", temperature=0.1, generation_max_length=4096)
+    model = OpenAIModel("gpt-4.1-mini", temperature=0.1, generation_max_length=4096)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_shards", type=int, default=1)
