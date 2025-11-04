@@ -64,7 +64,7 @@ def parse_arguments():
 
     # filtering
     parser.add_argument("--use_filtering", action="store_true")
-    parser.add_argument("--filtering_folder", type=str)
+    parser.add_argument("--filtering_path", type=str)
     parser.add_argument("--max_tokens_per_head", type=int)
     parser.add_argument("--g_threshold", type=float)
     parser.add_argument("--use_quest", action="store_true")
