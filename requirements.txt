@@ -2,7 +2,7 @@ wheel
 ninja
 packaging
 torch
-datasets<4.0.0
+datasets
 transformers
 accelerate
 sentencepiece
