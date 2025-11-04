@@ -1302,8 +1302,8 @@ class MyHFModel(LLM):
             attn_heads, sparsity = sparsify_attention_heads(attn_heads, sparsity=kwargs['duo_sparsity'])
             logger.info(f"duo_attn enabled with {sparsity} sparsity.")
 
-            model_config.enable_duo_attn = True
-            model_config.sink_size = sink_size
+            model_config.use_duo_attn = True
+            model_config.duo_attn_sink_size = sink_size
             model_config.local_window_size = recent_size
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
