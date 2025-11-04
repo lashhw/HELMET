@@ -10,11 +10,6 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 try:
-    from peft import PeftModel
-except:
-    pass
-
-try:
     from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
 except:
     pass
