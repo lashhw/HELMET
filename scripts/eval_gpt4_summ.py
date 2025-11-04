@@ -388,7 +388,7 @@ def check_metrics(model, results_file, output_file):
 
         rec = r["recall"] / len(d["keypoints"]) if len(d["keypoints"]) > 0 else 0
         prec = p["precision"] / p["sentence_count"] if p["sentence_count"] > 0 else 0
-        f1 = f["fluency"] * 2 * (rec * prec) / (rec + prec) if rec + prec > 0 else 0
+        f1 = 2 * (rec * prec) / (rec + prec) if rec + prec > 0 else 0
         d["gpt-4-scores"] = {
             "fluency": f["fluency"],
             "recall_total": len(d["keypoints"]),
