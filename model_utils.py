@@ -11,6 +11,7 @@ from tqdm.contrib.concurrent import thread_map
 
 try:
     from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
+    from transformers.modeling_layers import set_duo_attn_alpha
 except:
     pass
 
@@ -1325,11 +1326,7 @@ class MyHFModel(LLM):
             self.model.gating_mode = 3
 
         if kwargs['use_duo']:
-            assert attn_heads.shape == (model_config.num_hidden_layers, model_config.num_key_value_heads)
-            for layer_idx in range(model_config.num_hidden_layers):
-                assert self.model.model.layers[layer_idx].self_attn.duo_attn_alpha.shape == (model_config.num_key_value_heads,)
-                for head_idx in range(model_config.num_key_value_heads):
-                    self.model.model.layers[layer_idx].self_attn.duo_attn_alpha.data[head_idx] = attn_heads[layer_idx, head_idx]
+            set_duo_attn_alpha(self.model, attn_heads)
             self.model.gating_mode = 3
     
     def prepare_inputs(self, test_item, data):
