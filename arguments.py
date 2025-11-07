@@ -65,10 +65,8 @@ def parse_arguments():
     # filtering
     parser.add_argument("--use_filtering", action="store_true")
     parser.add_argument("--filtering_path", type=str)
+    parser.add_argument("--g_expand", type=int)
     parser.add_argument("--g_threshold", type=float)
-    parser.add_argument("--use_quest", action="store_true")
-    parser.add_argument("--quest_token_budget", type=int)
-    parser.add_argument("--save_attn_prob", type=float, default=0.0)
 
     # duo_attn
     parser.add_argument("--use_duo_attn", action="store_true")
@@ -76,6 +74,8 @@ def parse_arguments():
 
     # common
     parser.add_argument("--max_tokens_per_head", type=int)
+    parser.add_argument("--use_quest", action="store_true")
+    parser.add_argument("--quest_token_budget", type=int)
 
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config)) if args.config is not None else {}

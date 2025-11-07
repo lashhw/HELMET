@@ -1283,14 +1283,10 @@ class MyHFModel(LLM):
         assert kwargs['use_filtering'] + kwargs['use_duo_attn'] <= 1
 
         if kwargs['use_filtering']:
-            assert kwargs['g_threshold'] is not None
-            model_config.g_threshold = kwargs['g_threshold']
-
-            if kwargs['use_quest']:
-                model_config.use_quest = True
-                model_config.quest_token_budget = kwargs['quest_token_budget']
-
-            model_config.save_attn_prob = kwargs['save_attn_prob']
+            if kwargs['g_expand'] is not None:
+                model_config.g_expand = kwargs['g_expand']
+            if kwargs['g_threshold'] is not None:
+                model_config.g_threshold = kwargs['g_threshold']
 
         if kwargs['use_duo_attn']:
             attn_heads, sink_size, recent_size = load_attn_pattern(
@@ -1307,6 +1303,10 @@ class MyHFModel(LLM):
             assert kwargs['max_tokens_per_head'] is not None
             model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
             model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
+
+            if kwargs['use_quest']:
+                model_config.use_quest = True
+                model_config.quest_token_budget = kwargs['quest_token_budget']
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         if self.tokenizer.pad_token_id is None:
@@ -1412,13 +1412,13 @@ def load_LLM(args):
         kwargs['seed'] = args.seed
         kwargs['use_filtering'] = args.use_filtering
         kwargs['filtering_path'] = args.filtering_path
+        kwargs['g_expand'] = args.g_expand
         kwargs['g_threshold'] = args.g_threshold
-        kwargs['use_quest'] = args.use_quest
-        kwargs['quest_token_budget'] = args.quest_token_budget
-        kwargs['save_attn_prob'] = args.save_attn_prob
         kwargs['use_duo_attn'] = args.use_duo_attn
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
+        kwargs['use_quest'] = args.use_quest
+        kwargs['quest_token_budget'] = args.quest_token_budget
         if args.no_torch_compile:
             kwargs["torch_compile"] = False
         if args.no_bf16:
