@@ -71,8 +71,8 @@ def parse_arguments():
     parser.add_argument("--save_attn_prob", type=float, default=0.0)
 
     # duo_attn
-    parser.add_argument("--use_duo", action="store_true")
-    parser.add_argument("--duo_sparsity", type=float, default=0.5)
+    parser.add_argument("--use_duo_attn", action="store_true")
+    parser.add_argument("--duo_attn_sparsity", type=float, default=0.5)
 
     # common
     parser.add_argument("--max_tokens_per_head", type=int)

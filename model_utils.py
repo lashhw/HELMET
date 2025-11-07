@@ -1280,7 +1280,7 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        assert kwargs['use_filtering'] + kwargs['use_duo'] <= 1
+        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] <= 1
 
         if kwargs['use_filtering']:
             assert kwargs['g_threshold'] is not None
@@ -1292,18 +1292,18 @@ class MyHFModel(LLM):
 
             model_config.save_attn_prob = kwargs['save_attn_prob']
 
-        if kwargs['use_duo']:
+        if kwargs['use_duo_attn']:
             attn_heads, sink_size, recent_size = load_attn_pattern(
                 "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
             )
-            attn_heads, sparsity = sparsify_attention_heads(attn_heads, sparsity=kwargs['duo_sparsity'])
+            attn_heads, sparsity = sparsify_attention_heads(attn_heads, sparsity=kwargs['duo_attn_sparsity'])
             logger.info(f"duo_attn enabled with {sparsity} sparsity.")
 
-            model_config.use_duo_attn = True
+            model_config.use_duo_attn_attn = True
             model_config.duo_attn_sink_size = sink_size
             model_config.local_window_size = recent_size
         
-        if kwargs['use_filtering'] or kwargs['use_duo']:
+        if kwargs['use_filtering'] or kwargs['use_duo_attn']:
             assert kwargs['max_tokens_per_head'] is not None
             model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
             model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
@@ -1325,7 +1325,7 @@ class MyHFModel(LLM):
             assert len(unexpected_keys) == 0
             self.model.gating_mode = 3
 
-        if kwargs['use_duo']:
+        if kwargs['use_duo_attn']:
             set_duo_attn_alpha(self.model, attn_heads)
             self.model.gating_mode = 3
     
@@ -1416,8 +1416,8 @@ def load_LLM(args):
         kwargs['use_quest'] = args.use_quest
         kwargs['quest_token_budget'] = args.quest_token_budget
         kwargs['save_attn_prob'] = args.save_attn_prob
-        kwargs['use_duo'] = args.use_duo
-        kwargs['duo_sparsity'] = args.duo_sparsity
+        kwargs['use_duo_attn'] = args.use_duo_attn
+        kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         if args.no_torch_compile:
             kwargs["torch_compile"] = False
