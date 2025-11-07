@@ -72,7 +72,7 @@ def parse_arguments():
 
     # duo_attn
     parser.add_argument("--use_duo_attn", action="store_true")
-    parser.add_argument("--duo_attn_sparsity", type=float, default=0.5)
+    parser.add_argument("--duo_attn_sparsity", type=float)
 
     # common
     parser.add_argument("--max_tokens_per_head", type=int)
