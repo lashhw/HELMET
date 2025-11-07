@@ -1,6 +1,6 @@
-input_max_length: 32768
+input_max_length: '32768'
 datasets: multi_lexsum_32068
-generation_max_length: 400
+generation_max_length: '400'
 test_files: ''
 demo_files: ''
 use_chat_template: true
