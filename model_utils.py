@@ -1280,7 +1280,10 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] <= 1
+        assert kwargs['use_baseline'] + kwargs['use_filtering'] + kwargs['use_duo_attn'] <= 1
+
+        if kwargs['use_baseline']:
+            kwargs['use_baseline'] = True
 
         if kwargs['use_filtering']:
             if kwargs['g_expand'] is not None:
@@ -1410,6 +1413,7 @@ def load_LLM(args):
     else:
         model_cls = MyHFModel
         kwargs['seed'] = args.seed
+        kwargs['use_baseline'] = args.use_baseline
         kwargs['use_filtering'] = args.use_filtering
         kwargs['filtering_path'] = args.filtering_path
         kwargs['g_expand'] = args.g_expand
