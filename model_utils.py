@@ -1280,10 +1280,7 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        assert kwargs['use_baseline'] + kwargs['use_filtering'] + kwargs['use_duo_attn'] <= 1
-
-        if kwargs['use_baseline']:
-            kwargs['use_baseline'] = True
+        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] + kwargs['use_baseline'] <= 1
 
         if kwargs['use_filtering']:
             if kwargs['g_expand'] is not None:
@@ -1301,8 +1298,11 @@ class MyHFModel(LLM):
             model_config.use_duo_attn_attn = True
             model_config.duo_attn_sink_size = sink_size
             model_config.local_window_size = recent_size
+
+        if kwargs['use_baseline']:
+            kwargs['use_baseline'] = True
         
-        if kwargs['use_filtering'] or kwargs['use_duo_attn']:
+        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_baseline']:
             assert kwargs['max_tokens_per_head'] is not None
             model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
             model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
@@ -1413,13 +1413,13 @@ def load_LLM(args):
     else:
         model_cls = MyHFModel
         kwargs['seed'] = args.seed
-        kwargs['use_baseline'] = args.use_baseline
         kwargs['use_filtering'] = args.use_filtering
         kwargs['filtering_path'] = args.filtering_path
         kwargs['g_expand'] = args.g_expand
         kwargs['g_threshold'] = args.g_threshold
         kwargs['use_duo_attn'] = args.use_duo_attn
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
+        kwargs['use_baseline'] = args.use_baseline
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         kwargs['use_quest'] = args.use_quest
         kwargs['quest_token_budget'] = args.quest_token_budget

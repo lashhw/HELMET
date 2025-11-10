@@ -62,9 +62,6 @@ def parse_arguments():
     parser.add_argument("--debug", action="store_true", help="for debugging")
     parser.add_argument("--count_tokens", action="store_true", help="instead of running generation, just count the number of tokens (only for HF models not API)")
 
-    # baseline
-    parser.add_argument("--use_baseline", action="store_true")
-
     # filtering
     parser.add_argument("--use_filtering", action="store_true")
     parser.add_argument("--filtering_path", type=str)
@@ -74,6 +71,9 @@ def parse_arguments():
     # duo_attn
     parser.add_argument("--use_duo_attn", action="store_true")
     parser.add_argument("--duo_attn_sparsity", type=float)
+
+    # baseline
+    parser.add_argument("--use_baseline", action="store_true")
 
     # common
     parser.add_argument("--max_tokens_per_head", type=int)
