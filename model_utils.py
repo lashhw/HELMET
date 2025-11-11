@@ -1280,7 +1280,7 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] + kwargs['use_vanilla'] <= 1
+        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] + kwargs['use_baseline'] <= 1
 
         if kwargs['use_filtering']:
             if kwargs['g_expand'] is not None:
@@ -1299,10 +1299,10 @@ class MyHFModel(LLM):
             model_config.duo_attn_sink_size = sink_size
             model_config.local_window_size = recent_size
 
-        if kwargs['use_vanilla']:
-            kwargs['use_vanilla'] = True
+        if kwargs['use_baseline']:
+            kwargs['use_baseline'] = True
         
-        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_vanilla']:
+        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_baseline']:
             assert kwargs['max_tokens_per_head'] is not None
             model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
             model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
@@ -1419,7 +1419,7 @@ def load_LLM(args):
         kwargs['g_threshold'] = args.g_threshold
         kwargs['use_duo_attn'] = args.use_duo_attn
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
-        kwargs['use_vanilla'] = args.use_vanilla
+        kwargs['use_baseline'] = args.use_baseline
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         kwargs['use_quest'] = args.use_quest
         kwargs['quest_token_budget'] = args.quest_token_budget

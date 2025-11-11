@@ -72,8 +72,8 @@ def parse_arguments():
     parser.add_argument("--use_duo_attn", action="store_true")
     parser.add_argument("--duo_attn_sparsity", type=float)
 
-    # vanilla
-    parser.add_argument("--use_vanilla", action="store_true")
+    # baseline
+    parser.add_argument("--use_baseline", action="store_true")
 
     # common
     parser.add_argument("--max_tokens_per_head", type=int)
