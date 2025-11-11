@@ -72,7 +72,7 @@ def parse_arguments():
     parser.add_argument("--use_duo_attn", action="store_true")
     parser.add_argument("--duo_attn_sparsity", type=float)
 
-    # baseline
+    # vanilla
     parser.add_argument("--use_vanilla", action="store_true")
 
     # common
