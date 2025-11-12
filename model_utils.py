@@ -1289,13 +1289,11 @@ class MyHFModel(LLM):
                 model_config.g_threshold = kwargs['g_threshold']
 
         if kwargs['use_duo_attn']:
-            attn_heads, sink_size, recent_size = load_attn_pattern(
-                "duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10"
-            )
+            attn_heads, sink_size, recent_size = load_attn_pattern(kwargs['duo_attn_pattern_dir'])
             attn_heads, sparsity = sparsify_attention_heads(attn_heads, sparsity=kwargs['duo_attn_sparsity'])
             logger.info(f"duo_attn enabled with {sparsity} sparsity.")
 
-            model_config.use_duo_attn_attn = True
+            model_config.use_duo_attn = True
             model_config.duo_attn_sink_size = sink_size
             model_config.local_window_size = recent_size
 
@@ -1418,6 +1416,7 @@ def load_LLM(args):
         kwargs['g_expand'] = args.g_expand
         kwargs['g_threshold'] = args.g_threshold
         kwargs['use_duo_attn'] = args.use_duo_attn
+        kwargs['duo_attn_pattern_dir'] = args.duo_attn_pattern_dir
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
         kwargs['use_baseline'] = args.use_baseline
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head

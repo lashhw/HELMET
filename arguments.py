@@ -70,6 +70,7 @@ def parse_arguments():
 
     # duo_attn
     parser.add_argument("--use_duo_attn", action="store_true")
+    parser.add_argument("--duo_attn_pattern_dir", type=str)
     parser.add_argument("--duo_attn_sparsity", type=float)
 
     # baseline
