@@ -12,7 +12,7 @@ for dataset in $datasets; do
         --config configs/extra/${dataset}_32k.yaml \
         --seed 42 \
         --model_name_or_path meta-llama/Llama-3.2-1B-Instruct \
-        --output_dir output/all/${dataset}_32k/${lambda}-${threshold} \
+        --output_dir output/llama-3.2-1b/${dataset}_32k/${lambda}-${threshold} \
         --use_filtering \
         --filtering_path weights/llama-3.2-1b-${lambda}.pt \
         --g_threshold ${threshold} \

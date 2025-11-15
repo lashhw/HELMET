@@ -10,7 +10,7 @@ for dataset in $datasets; do
       --config configs/extra/${dataset}_32k.yaml \
       --seed 42 \
       --model_name_or_path meta-llama/Llama-3.2-1B-Instruct \
-      --output_dir output/all/${dataset}_32k/duo-${sparsity} \
+      --output_dir output/llama-3.2-1b/${dataset}_32k/duo-${sparsity} \
       --use_duo_attn \
       --duo_attn_pattern_dir weights/llama-3.2-1b-lr0.2-lambda0.05 \
       --duo_attn_sparsity ${sparsity} \
