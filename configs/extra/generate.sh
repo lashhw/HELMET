@@ -8,6 +8,8 @@ python filter_config.py -i ../rag_short.yaml -o triviaqa_32k.yaml -x 6
 python filter_config.py -i ../rag_short.yaml -o hotpotqa_32k.yaml -x 10
 python filter_config.py -i ../rag_short.yaml -o popqa_32k.yaml -x 14
 python filter_config.py -i ../rerank_short.yaml -o rerank_32k.yaml -x 2
+python filter_config.py -i ../cite_short.yaml -o asqa_32k.yaml -x 2
+python filter_config.py -i ../cite_short.yaml -o qampari_32k.yaml -x 6
 python filter_config.py -i ../longqa_short.yaml -o narrativeqa_32k.yaml -x 2
 python filter_config.py -i ../longqa_short.yaml -o infbenchqa_32k.yaml -x 6
 python filter_config.py -i ../longqa_short.yaml -o infbenchmc_32k.yaml -x 10
