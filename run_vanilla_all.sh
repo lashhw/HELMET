@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-datasets="nq triviaqa hotpotqa popqa rerank narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf banking clinc nlu"
+datasets="nq triviaqa popqa hotpotqa rerank asqa qampari narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf nlu banking clinc"
 
 for dataset in $datasets; do
   python eval.py \
