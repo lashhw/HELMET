@@ -3,7 +3,7 @@ set -e
 
 datasets="nq triviaqa hotpotqa popqa rerank narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf banking clinc nlu"
 lambdas="0.02 0.028 0.04 0.057 0.08 0.16 0.32 0.64 1.28 2.56"
-thresholds="0.01"
+thresholds="0.1"
 
 for dataset in $datasets; do
   for lambda in $lambdas; do
