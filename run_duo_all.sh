@@ -9,10 +9,10 @@ for dataset in $datasets; do
     python eval.py \
       --config configs/extra/${dataset}_32k.yaml \
       --seed 42 \
-      --model_name_or_path meta-llama/Llama-3.2-1B-Instruct \
-      --output_dir output/llama-3.2-1b/${dataset}_32k/duo-${sparsity} \
+      --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
+      --output_dir output/llama-3.1-8b/${dataset}_32k/duo-iclr-${sparsity} \
       --use_duo_attn \
-      --duo_attn_pattern_dir weights/llama-3.2-1b-lr0.2-lambda0.05 \
+      --duo_attn_pattern_dir duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10 \
       --duo_attn_sparsity ${sparsity} \
       --max_tokens_per_head 65536
   done
