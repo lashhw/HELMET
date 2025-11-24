@@ -12,7 +12,7 @@ for dataset in $datasets; do
       --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
       --output_dir output/llama-3.1-8b/${dataset}_32k/quest-${budget} \
       --use_baseline \
-      --max_tokens_per_head 65536 \
+      --max_tokens_per_head 40000 \
       --use_quest \
       --quest_token_budget ${budget}
   done

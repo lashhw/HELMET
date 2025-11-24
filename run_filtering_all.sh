@@ -16,7 +16,7 @@ for dataset in $datasets; do
         --use_filtering \
         --filtering_path weights/llama-3.1-8b-${lambda}.pt \
         --g_threshold ${threshold} \
-        --max_tokens_per_head 65536
+        --max_tokens_per_head 40000
     done
   done
 done

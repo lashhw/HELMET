@@ -14,6 +14,6 @@ for dataset in $datasets; do
       --use_duo_attn \
       --duo_attn_pattern_dir duo_attn/attn_patterns/Meta-Llama-3.1-8B-Instruct/lr=0.02-reg=0.05-ctx=1000_128000-multi_passkey10 \
       --duo_attn_sparsity ${sparsity} \
-      --max_tokens_per_head 65536
+      --max_tokens_per_head 40000
   done
 done
