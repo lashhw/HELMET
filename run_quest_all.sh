@@ -2,7 +2,7 @@
 set -e
 
 datasets="nq triviaqa popqa hotpotqa rerank asqa qampari narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf nlu banking clinc"
-budgets="1024 2048 4096 8192"
+budgets="1024 2048 4096 8192 16384"
 
 for dataset in $datasets; do
   for budget in $budgets; do
@@ -10,7 +10,7 @@ for dataset in $datasets; do
       --config configs/extra/${dataset}_32k.yaml \
       --seed 42 \
       --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
-      --output_dir output/llama-3.1-8b/${dataset}_32k/vanilla \
+      --output_dir output/llama-3.1-8b/${dataset}_32k/quest-${budget} \
       --use_baseline \
       --max_tokens_per_head 65536 \
       --use_quest \
