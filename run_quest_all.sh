@@ -2,7 +2,7 @@
 set -e
 
 datasets="nq triviaqa popqa hotpotqa rerank asqa qampari narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf nlu banking clinc"
-budgets=$2
+budgets=$1
 
 for dataset in $datasets; do
   for budget in $budgets; do
