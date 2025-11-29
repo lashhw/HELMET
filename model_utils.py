@@ -1298,7 +1298,7 @@ class MyHFModel(LLM):
             model_config.local_window_size = recent_size
 
         if kwargs['use_baseline']:
-            kwargs['use_baseline'] = True
+            model_config.use_baseline = True
         
         if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_baseline']:
             assert kwargs['max_tokens_per_head'] is not None
