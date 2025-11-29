@@ -1280,7 +1280,7 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] + kwargs['use_baseline'] <= 1
+        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] + kwargs['use_local'] + kwargs['use_baseline'] <= 1
 
         if kwargs['use_filtering']:
             if kwargs['g_expand'] is not None:
@@ -1298,8 +1298,8 @@ class MyHFModel(LLM):
             model_config.local_window_size = recent_size
 
         if kwargs['use_local']:
-            assert kwargs['local_window_ratio'] is not None
             assert kwargs['sink_size'] is not None
+            assert kwargs['local_window_ratio'] is not None
 
             self.use_local = True
             self.local_window_ratio = kwargs['local_window_ratio']
