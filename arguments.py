@@ -76,7 +76,7 @@ def parse_arguments():
     # local
     parser.add_argument("--use_local", action="store_true")
     parser.add_argument("--sink_size", type=int)
-    parser.add_argument("--local_window_ratio", type=float)
+    parser.add_argument("--local_sparsity", type=float)
 
     # baseline
     parser.add_argument("--use_baseline", action="store_true")

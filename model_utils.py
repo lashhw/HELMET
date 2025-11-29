@@ -1299,10 +1299,10 @@ class MyHFModel(LLM):
 
         if kwargs['use_local']:
             assert kwargs['sink_size'] is not None
-            assert kwargs['local_window_ratio'] is not None
+            assert kwargs['local_sparsity'] is not None
 
             self.use_local = True
-            self.local_window_ratio = kwargs['local_window_ratio']
+            self.local_sparsity = kwargs['local_sparsity']
 
             model_config.use_duo_attn = True
             model_config.duo_attn_sink_size = kwargs['sink_size']
@@ -1365,7 +1365,7 @@ class MyHFModel(LLM):
         input_len = inputs.input_ids.size(1)
 
         if self.use_local:
-            local_window_size = int(input_len * self.local_window_ratio)
+            local_window_size = int(input_len * (1 - self.local_sparsity))
             self.model.config.local_window_size = ((local_window_size + 64 - 1) // 64) * 64
 
         past_key_values = DynamicCache()
@@ -1439,7 +1439,7 @@ def load_LLM(args):
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
         kwargs['use_local'] = args.use_local
         kwargs['sink_size'] = args.sink_size
-        kwargs['local_window_ratio'] = args.local_window_ratio
+        kwargs['local_sparsity'] = args.local_sparsity
         kwargs['use_baseline'] = args.use_baseline
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         kwargs['use_quest'] = args.use_quest
