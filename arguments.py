@@ -73,6 +73,11 @@ def parse_arguments():
     parser.add_argument("--duo_attn_pattern_dir", type=str)
     parser.add_argument("--duo_attn_sparsity", type=float)
 
+    # local
+    parser.add_argument("--use_local", action="store_true")
+    parser.add_argument("--sink_size", type=int)
+    parser.add_argument("--local_window_ratio", type=float)
+
     # baseline
     parser.add_argument("--use_baseline", action="store_true")
 

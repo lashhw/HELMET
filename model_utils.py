@@ -1297,10 +1297,20 @@ class MyHFModel(LLM):
             model_config.duo_attn_sink_size = sink_size
             model_config.local_window_size = recent_size
 
+        if kwargs['use_local']:
+            assert kwargs['local_window_ratio'] is not None
+            assert kwargs['sink_size'] is not None
+
+            self.use_local = True
+            self.local_window_ratio = kwargs['local_window_ratio']
+
+            model_config.use_duo_attn = True
+            model_config.duo_attn_sink_size = kwargs['sink_size']
+
         if kwargs['use_baseline']:
             model_config.use_baseline = True
         
-        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_baseline']:
+        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
             assert kwargs['max_tokens_per_head'] is not None
             model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
             model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
@@ -1324,10 +1334,15 @@ class MyHFModel(LLM):
             state_dict = torch.load(kwargs['filtering_path'])
             _, unexpected_keys = self.model.load_state_dict(state_dict, strict=False)
             assert len(unexpected_keys) == 0
-            self.model.gating_mode = 3
 
         if kwargs['use_duo_attn']:
             set_duo_attn_alpha(self.model, attn_heads)
+
+        if kwargs['use_local']:
+            attn_heads = torch.zeros(self.model.config.num_hidden_layers, self.model.config.num_key_value_heads)
+            set_duo_attn_alpha(self.model, attn_heads)
+
+        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
             self.model.gating_mode = 3
     
     def prepare_inputs(self, test_item, data):
@@ -1348,6 +1363,10 @@ class MyHFModel(LLM):
 
         inputs = inputs.to(self.model.device)
         input_len = inputs.input_ids.size(1)
+
+        if self.use_local:
+            local_window_size = int(input_len * self.local_window_ratio)
+            self.model.config.local_window_size = ((local_window_size + 64 - 1) // 64) * 64
 
         past_key_values = DynamicCache()
         outputs = self.model.generate(
@@ -1418,6 +1437,9 @@ def load_LLM(args):
         kwargs['use_duo_attn'] = args.use_duo_attn
         kwargs['duo_attn_pattern_dir'] = args.duo_attn_pattern_dir
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
+        kwargs['use_local'] = args.use_local
+        kwargs['sink_size'] = args.sink_size
+        kwargs['local_window_ratio'] = args.local_window_ratio
         kwargs['use_baseline'] = args.use_baseline
         kwargs['max_tokens_per_head'] = args.max_tokens_per_head
         kwargs['use_quest'] = args.use_quest
