@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-datasets="nq triviaqa popqa hotpotqa rerank asqa qampari narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf nlu banking clinc"
+datasets="nq triviaqa popqa hotpotqa rerank narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf nlu banking clinc"
 lambdas="2.56 1.28 0.64 0.32 0.16 0.08 0.04 0.02 0.01"
 threshold=0.1
 
