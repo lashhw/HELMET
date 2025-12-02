@@ -1364,7 +1364,7 @@ class MyHFModel(LLM):
         inputs = inputs.to(self.model.device)
         input_len = inputs.input_ids.size(1)
 
-        if self.use_local:
+        if getattr(self, "use_local", False):
             local_window_size = int(input_len * (1 - self.local_sparsity))
             self.model.config.local_window_size = ((local_window_size + 64 - 1) // 64) * 64
 
