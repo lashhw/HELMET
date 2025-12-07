@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-datasets="nq triviaqa popqa hotpotqa rerank narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecc trecf nlu banking clinc"
+datasets="nq triviaqa popqa hotpotqa rerank narrativeqa infbenchqa infbenchmc infbenchsum lexsum trecf nlu banking clinc"
 sparsitys="0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1"
 
 for dataset in $datasets; do
