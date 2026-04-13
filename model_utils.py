@@ -11,7 +11,7 @@ from tqdm.contrib.concurrent import thread_map
 
 try:
     from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
-    from transformers.modeling_layers import set_duo_attn_alpha
+    from transformers.modeling_layers import set_duo_attn_alpha, set_adaea_data
 except:
     pass
 
@@ -1280,13 +1280,16 @@ class MyHFModel(LLM):
 
         model_config = AutoConfig.from_pretrained(model_name)
 
-        assert kwargs['use_filtering'] + kwargs['use_duo_attn'] + kwargs['use_local'] + kwargs['use_baseline'] <= 1
+        assert kwargs['use_filtering'] + kwargs['use_adaea'] + kwargs['use_duo_attn'] + kwargs['use_local'] + kwargs['use_baseline'] <= 1
 
         if kwargs['use_filtering']:
             if kwargs['g_expand'] is not None:
                 model_config.g_expand = kwargs['g_expand']
             if kwargs['g_threshold'] is not None:
                 model_config.g_threshold = kwargs['g_threshold']
+
+        if kwargs['use_adaea']:
+            model_config.use_adaea = True
 
         if kwargs['use_duo_attn']:
             attn_heads, sink_size, recent_size = load_attn_pattern(kwargs['duo_attn_pattern_dir'])
@@ -1310,7 +1313,7 @@ class MyHFModel(LLM):
         if kwargs['use_baseline']:
             model_config.use_baseline = True
         
-        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
+        if kwargs['use_filtering'] or kwargs['use_adaea'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
             assert kwargs['max_tokens_per_head'] is not None
             model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
             model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
@@ -1335,6 +1338,9 @@ class MyHFModel(LLM):
             _, unexpected_keys = self.model.load_state_dict(state_dict, strict=False)
             assert len(unexpected_keys) == 0
 
+        if kwargs['use_adaea']:
+            set_adaea_data(self.model, kwargs['adaea_threshold_path'], kwargs['adaea_query_stats_path'])
+
         if kwargs['use_duo_attn']:
             set_duo_attn_alpha(self.model, attn_heads)
 
@@ -1342,7 +1348,7 @@ class MyHFModel(LLM):
             attn_heads = torch.zeros(self.model.config.num_hidden_layers, self.model.config.num_key_value_heads)
             set_duo_attn_alpha(self.model, attn_heads)
 
-        if kwargs['use_filtering'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
+        if kwargs['use_filtering'] or kwargs['use_adaea'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
             self.model.gating_mode = 3
     
     def prepare_inputs(self, test_item, data):
@@ -1434,6 +1440,9 @@ def load_LLM(args):
         kwargs['filtering_path'] = args.filtering_path
         kwargs['g_expand'] = args.g_expand
         kwargs['g_threshold'] = args.g_threshold
+        kwargs['use_adaea'] = args.use_adaea
+        kwargs['adaea_threshold_path'] = args.adaea_threshold_path
+        kwargs['adaea_query_stats_path'] = args.adaea_query_stats_path
         kwargs['use_duo_attn'] = args.use_duo_attn
         kwargs['duo_attn_pattern_dir'] = args.duo_attn_pattern_dir
         kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity

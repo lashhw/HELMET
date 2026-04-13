@@ -68,6 +68,11 @@ def parse_arguments():
     parser.add_argument("--g_expand", type=int)
     parser.add_argument("--g_threshold", type=float)
 
+    # adaea
+    parser.add_argument("--use_adaea", action="store_true")
+    parser.add_argument("--adaea_threshold_path", type=str)
+    parser.add_argument("--adaea_query_stats_path", type=str)
+
     # duo_attn
     parser.add_argument("--use_duo_attn", action="store_true")
     parser.add_argument("--duo_attn_pattern_dir", type=str)
