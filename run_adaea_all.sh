@@ -12,8 +12,8 @@ for dataset in $datasets; do
       --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
       --output_dir output/llama-3.1-8b/${dataset}_32k/adaea-${sparsity} \
       --use_adaea \
-      --adaea_threshold_path weights/adaea/llama-3.1-8b/${sparsity}_threshold.tsv \
-      --adaea_query_stats_path weights/adaea/llama-3.1-8b/query_stats.pt \
+      --adaea_threshold_path weights/adaea/llama-3.1-8b-instruct/${sparsity}_threshold.tsv \
+      --adaea_query_stats_path weights/adaea/llama-3.1-8b-instruct/query_stats.pt \
       --max_tokens_per_head 40000
   done
 done
