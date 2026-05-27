@@ -1,9 +1,9 @@
 wheel
 ninja
 packaging
-torch
-datasets
-transformers
+torch==2.8.0
+datasets==3.6.0
+transformers==4.53.3
 accelerate
 sentencepiece
 pytrec_eval

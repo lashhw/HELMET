@@ -5,9 +5,15 @@ from typing import Optional, List, Dict, Callable, Any
 import functools
 
 import torch
-from transformers import PreTrainedTokenizer, set_seed
+from transformers import PreTrainedTokenizer, set_seed, DynamicCache
 from tqdm import tqdm
 from tqdm.contrib.concurrent import thread_map
+
+try:
+    from duo_attn.duo_attn.utils import load_attn_pattern, sparsify_attention_heads
+    from transformers.modeling_layers import set_duo_attn_alpha, set_adaea_data
+except:
+    pass
 
 import logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
@@ -243,12 +249,8 @@ class OpenAIModel(LLM):
                     "body": {
                         "model": self.model_name,
                         "messages": p,
-                        "max_tokens": self.generation_max_length,
-                        "temperature": self.temperature if self.do_sample else 0.0,
-                        "top_p": self.top_p,
-                        "stop": self.stops,
-                        "seed": self.seed,
-                        **kwargs,
+                        "max_completion_tokens": self.generation_max_length,
+                        "temperature": self.temperature,
                     }
                 }) + "\n")
         upload_file = self.model.files.create(file=open(batch_file, "rb"), purpose="batch")
@@ -1255,6 +1257,160 @@ class SGLangModel(LLM):
         ]
 
 
+class MyHFModel(LLM):
+    def __init__(
+        self,
+        model_name,
+        max_length,
+        generation_max_length,
+        generation_min_length,
+        use_chat_template,
+        system_message,
+        seed,
+        **kwargs,
+    ):
+        self.max_length = max_length
+        self.generation_max_length = generation_max_length
+        self.generation_min_length = generation_min_length
+        self.use_chat_template = use_chat_template
+        self.system_message = system_message
+        set_seed(seed)
+
+        from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
+
+        model_config = AutoConfig.from_pretrained(model_name)
+
+        assert kwargs['use_filtering'] + kwargs['use_adaea'] + kwargs['use_duo_attn'] + kwargs['use_local'] + kwargs['use_baseline'] <= 1
+
+        if kwargs['use_filtering']:
+            if kwargs['g_expand'] is not None:
+                model_config.g_expand = kwargs['g_expand']
+            if kwargs['g_threshold'] is not None:
+                model_config.g_threshold = kwargs['g_threshold']
+
+        if kwargs['use_adaea']:
+            model_config.use_adaea = True
+
+        if kwargs['use_duo_attn']:
+            attn_heads, sink_size, recent_size = load_attn_pattern(kwargs['duo_attn_pattern_dir'])
+            attn_heads, sparsity = sparsify_attention_heads(attn_heads, sparsity=kwargs['duo_attn_sparsity'])
+            logger.info(f"duo_attn enabled with {sparsity} sparsity.")
+
+            model_config.use_duo_attn = True
+            model_config.duo_attn_sink_size = sink_size
+            model_config.local_window_size = recent_size
+
+        if kwargs['use_local']:
+            assert kwargs['sink_size'] is not None
+            assert kwargs['local_sparsity'] is not None
+
+            self.use_local = True
+            self.local_sparsity = kwargs['local_sparsity']
+
+            model_config.use_duo_attn = True
+            model_config.duo_attn_sink_size = kwargs['sink_size']
+
+        if kwargs['use_baseline']:
+            model_config.use_baseline = True
+        
+        if kwargs['use_filtering'] or kwargs['use_adaea'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
+            assert kwargs['max_tokens_per_head'] is not None
+            model_config.max_total_tokens = kwargs['max_tokens_per_head'] * model_config.num_hidden_layers * model_config.num_key_value_heads
+            model_config.max_tokens_per_head = kwargs['max_tokens_per_head']
+
+            if kwargs['use_quest']:
+                model_config.use_quest = True
+                model_config.quest_token_budget = kwargs['quest_token_budget']
+
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            config=model_config,
+            torch_dtype="auto",
+            device_map="auto"
+        )
+
+        if kwargs['use_filtering']:
+            state_dict = torch.load(kwargs['filtering_path'])
+            _, unexpected_keys = self.model.load_state_dict(state_dict, strict=False)
+            assert len(unexpected_keys) == 0
+
+        if kwargs['use_adaea']:
+            set_adaea_data(self.model, kwargs['adaea_threshold_path'], kwargs['adaea_query_stats_path'])
+
+        if kwargs['use_duo_attn']:
+            set_duo_attn_alpha(self.model, attn_heads)
+
+        if kwargs['use_local']:
+            attn_heads = torch.zeros(self.model.config.num_hidden_layers, self.model.config.num_key_value_heads)
+            set_duo_attn_alpha(self.model, attn_heads)
+
+        if kwargs['use_filtering'] or kwargs['use_adaea'] or kwargs['use_duo_attn'] or kwargs['use_local'] or kwargs['use_baseline']:
+            self.model.gating_mode = 3
+    
+    def prepare_inputs(self, test_item, data):
+        return tokenize(
+            test_item,
+            data,
+            tokenizer=self.tokenizer,
+            max_length=self.max_length,
+            generation_max_length=self.generation_max_length,
+            use_chat_template=self.use_chat_template,
+            system_message=self.system_message,
+        )
+    
+    @torch.no_grad()
+    def generate(self, inputs=None, prompt=None, **kwargs):
+        assert inputs is not None
+        assert prompt is None
+
+        inputs = inputs.to(self.model.device)
+        input_len = inputs.input_ids.size(1)
+
+        if getattr(self, "use_local", False):
+            local_window_size = int(input_len * (1 - self.local_sparsity))
+            self.model.config.local_window_size = ((local_window_size + 64 - 1) // 64) * 64
+
+        past_key_values = DynamicCache()
+        outputs = self.model.generate(
+            **inputs,
+            max_new_tokens=self.generation_max_length,
+            min_new_tokens=self.generation_min_length,
+            do_sample=False,
+            temperature=None,
+            top_p=None,
+            top_k=None,
+            pad_token_id=self.tokenizer.pad_token_id,
+            return_dict_in_generate=True,
+            past_key_values=past_key_values,
+        )
+        text = self.tokenizer.decode(outputs['sequences'][0, input_len:], skip_special_tokens=True)
+
+        save_prompt = self.tokenizer.decode(inputs["input_ids"][0][:500]) + " <skip> " + self.tokenizer.decode(inputs["input_ids"][0][-500:])
+        output_len = outputs['sequences'].size(1) - input_len
+        # free up some gpu memory
+        del inputs
+        del outputs
+
+        if hasattr(self.model, 'gating_mode') and self.model.gating_mode == 3:
+            total_tokens_in_kv_cache = past_key_values.next_free_block * self.model.config.block_size
+            average_tokens_in_kv_cache = total_tokens_in_kv_cache / (self.model.config.num_hidden_layers * self.model.config.num_key_value_heads)
+            input_len = average_tokens_in_kv_cache
+
+        return {
+            "output": text,
+            "input_len": input_len,
+            "output_len": output_len,
+            "input_text": save_prompt,
+        }
+
+    def generate_batch(self, inputs=None, prompt=None, **kwargs):
+        return super().generate_batch(inputs=inputs, prompt=prompt, **kwargs)
+
+
 def load_LLM(args):
     kwargs = {}
     if "gpt" in args.model_name_or_path:
@@ -1278,8 +1434,25 @@ def load_LLM(args):
         model_cls = SGLangModel
         kwargs['seed'] = args.seed
     else:
-        model_cls = HFModel
+        model_cls = MyHFModel
         kwargs['seed'] = args.seed
+        kwargs['use_filtering'] = args.use_filtering
+        kwargs['filtering_path'] = args.filtering_path
+        kwargs['g_expand'] = args.g_expand
+        kwargs['g_threshold'] = args.g_threshold
+        kwargs['use_adaea'] = args.use_adaea
+        kwargs['adaea_threshold_path'] = args.adaea_threshold_path
+        kwargs['adaea_query_stats_path'] = args.adaea_query_stats_path
+        kwargs['use_duo_attn'] = args.use_duo_attn
+        kwargs['duo_attn_pattern_dir'] = args.duo_attn_pattern_dir
+        kwargs['duo_attn_sparsity'] = args.duo_attn_sparsity
+        kwargs['use_local'] = args.use_local
+        kwargs['sink_size'] = args.sink_size
+        kwargs['local_sparsity'] = args.local_sparsity
+        kwargs['use_baseline'] = args.use_baseline
+        kwargs['max_tokens_per_head'] = args.max_tokens_per_head
+        kwargs['use_quest'] = args.use_quest
+        kwargs['quest_token_budget'] = args.quest_token_budget
         if args.no_torch_compile:
             kwargs["torch_compile"] = False
         if args.no_bf16:

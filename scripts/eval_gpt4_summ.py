@@ -388,7 +388,7 @@ def check_metrics(model, results_file, output_file):
 
         rec = r["recall"] / len(d["keypoints"]) if len(d["keypoints"]) > 0 else 0
         prec = p["precision"] / p["sentence_count"] if p["sentence_count"] > 0 else 0
-        f1 = f["fluency"] * 2 * (rec * prec) / (rec + prec) if rec + prec > 0 else 0
+        f1 = 2 * (rec * prec) / (rec + prec) if rec + prec > 0 else 0
         d["gpt-4-scores"] = {
             "fluency": f["fluency"],
             "recall_total": len(d["keypoints"]),
@@ -428,7 +428,7 @@ def check_metrics(model, results_file, output_file):
     return results
 
 if __name__ == "__main__":
-    model = OpenAIModel("gpt-4o-2024-05-13", temperature=0.1, generation_max_length=4096)
+    model = OpenAIModel("gpt-4.1-mini", temperature=0.1, generation_max_length=4096)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_shards", type=int, default=1)

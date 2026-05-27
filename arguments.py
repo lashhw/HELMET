@@ -62,6 +62,35 @@ def parse_arguments():
     parser.add_argument("--debug", action="store_true", help="for debugging")
     parser.add_argument("--count_tokens", action="store_true", help="instead of running generation, just count the number of tokens (only for HF models not API)")
 
+    # filtering
+    parser.add_argument("--use_filtering", action="store_true")
+    parser.add_argument("--filtering_path", type=str)
+    parser.add_argument("--g_expand", type=int)
+    parser.add_argument("--g_threshold", type=float)
+
+    # adaea
+    parser.add_argument("--use_adaea", action="store_true")
+    parser.add_argument("--adaea_threshold_path", type=str)
+    parser.add_argument("--adaea_query_stats_path", type=str)
+
+    # duo_attn
+    parser.add_argument("--use_duo_attn", action="store_true")
+    parser.add_argument("--duo_attn_pattern_dir", type=str)
+    parser.add_argument("--duo_attn_sparsity", type=float)
+
+    # local
+    parser.add_argument("--use_local", action="store_true")
+    parser.add_argument("--sink_size", type=int)
+    parser.add_argument("--local_sparsity", type=float)
+
+    # baseline
+    parser.add_argument("--use_baseline", action="store_true")
+
+    # common
+    parser.add_argument("--max_tokens_per_head", type=int)
+    parser.add_argument("--use_quest", action="store_true")
+    parser.add_argument("--quest_token_budget", type=int)
+
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config)) if args.config is not None else {}
     parser.set_defaults(**config)

@@ -86,7 +86,7 @@ def check_metrics(model, results_file, output_file):
                 print(f"GPT-4 output: {o['output']}")
 
             if scores is not None:
-                sum_score += scores["fluency"] * scores["correctness"]
+                sum_score += scores["correctness"]
                 count_score += 1
 
         d["gpt-4-scores"] = s
@@ -104,7 +104,7 @@ def check_metrics(model, results_file, output_file):
     return results
 
 if __name__ == "__main__":
-    model = OpenAIModel("gpt-4o-2024-05-13", temperature=0.1)
+    model = OpenAIModel("gpt-4.1-mini", temperature=0.1)
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_shards", type=int, default=1)
     parser.add_argument("--shard_idx", type=int, default=0)

@@ -221,7 +221,7 @@ def main():
                 #     cli_args.append("--mauve")
                 # elif "eli5" in dataset:
                 #   cli_args += ["mauve", "--claims_nli"]
-                eval_alce.main(cli_args)
+                #eval_alce.main(cli_args)
 
         except Exception as e:
             # in case we run into some kind of error
